@@ -1,6 +1,7 @@
 package com.github.glaucioscheibel.dbcopy;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.FileReader;
 import java.io.PrintWriter;
 import java.sql.Blob;
@@ -21,8 +22,7 @@ import java.util.Set;
 
 public final class Main {
 
-    private Main() {
-    }
+    private Main() {}
 
     public static void main(String[] args) throws Exception {
         DecimalFormat df = new DecimalFormat("#,##0");
@@ -115,8 +115,7 @@ public final class Main {
                         try {
                             st2.executeUpdate("set identity_insert " + tabela + " on");
                             msid = true;
-                        } catch (SQLException se) {
-                        }
+                        } catch (SQLException se) {}
                     }
                     ResultSet rs1 = st1.executeQuery("select * from " + tabela); // origem
                     ResultSetMetaData rsmd1 = rs1.getMetaData();
@@ -246,6 +245,8 @@ public final class Main {
                                         }
                                         break;
                                     case Types.BLOB:
+                                    case Types.BINARY:
+                                    case Types.VARBINARY:
                                     case Types.LONGVARBINARY:
                                         Blob blaux = rs1.getBlob(i);
                                         if (rs1.wasNull()) {
@@ -253,9 +254,8 @@ public final class Main {
                                         } else {
                                             long length = blaux.length();
                                             byte[] bytes = blaux.getBytes(1, (int) length);
-                                            Blob b2 = con2.createBlob();
-                                            b2.setBytes(1, bytes);
-                                            ps2.setBlob(colreal, b2);
+                                            ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
+                                            ps2.setBinaryStream(colreal, bis, length);
                                         }
                                         break;
                                     default:
@@ -288,8 +288,7 @@ public final class Main {
                         try {
                             st2.executeUpdate("set identity_insert " + tabela + " off");
                             msid = false;
-                        } catch (SQLException se) {
-                        }
+                        } catch (SQLException se) {}
                     }
                 } catch (SQLException e) {
                     e.printStackTrace();
@@ -305,8 +304,7 @@ public final class Main {
             if (db2.equalsIgnoreCase("Microsoft SQL Server")) {
                 try {
                     st2.executeUpdate("exec sp_msforeachtable \"ALTER TABLE ? WITH CHECK CHECK CONSTRAINT ALL\"");
-                } catch (SQLException se) {
-                }
+                } catch (SQLException se) {}
             }
             if (db2.equalsIgnoreCase("Mysql")) {
                 try {
